@@ -117,7 +117,7 @@ def status():
     else:
         print("The server is not running.")
     
-print(os.getcwd())
+#print(os.getcwd())
 
 main.add_command(start)
 main.add_command(stop)
