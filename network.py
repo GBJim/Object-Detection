@@ -1,5 +1,7 @@
 import _init_paths
 import os
+os.environ['GLOG_minloglevel'] = '2' 
+
 from fast_rcnn.config import cfg, cfg_from_file, cfg_from_list
 from fast_rcnn.test import im_detect
 from fast_rcnn.nms_wrapper import nms
@@ -7,11 +9,10 @@ from utils.timer import Timer
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.io as sio
-import caffe, sys, cv2
+import caffe, sys,cv2
 import argparse
 import glob
 import json
-
 
 
 #The main class containing network object and two detection methods
@@ -24,8 +25,10 @@ class Network():
                         'motorbike', 'person', 'pottedplant',\
                         'sheep', 'sofa', 'train', 'tvmonitor')
     
-    network_map={"lite":["pvanet/models/pvanet/lite/test.pt", "pvanet/models/pvanet/lite/test.model"],\
-            "full":["pvanet/models/pvanet/full/test.pt","pvanet/models/pvanet/full/test.model"]}
+    network_map={"lite":["/root/Object-Detection/pvanet/models/pvanet/lite/test.pt", \
+                         "/root/Object-Detection/pvanet/models/pvanet/lite/test.model"],\
+            "full":["/root/Object-Detection/pvanet/models/pvanet/full/test.pt",\
+                    "/root/Object-Detection/pvanet/models/pvanet/full/test.model"]}
     
     
     
@@ -35,12 +38,13 @@ class Network():
         if not os.path.isfile(caffemodel):
             raise IOError(('{:s} not found.\nDid you run ./data/script/'
                            'fetch_faster_rcnn_models.sh?').format(caffemodel))  
-        
+
         caffe.set_mode_gpu()
         cfg.GPU_ID = gpu_id
-        cfg_from_file("pvanet/models/pvanet/cfgs/submit_160715.yml")
+        cfg_from_file("/root/Object-Detection/pvanet/models/pvanet/cfgs/submit_160715.yml")
         print("Loading Network to GPU")
         self._net = caffe.Net(prototxt, caffemodel, caffe.TEST)
+        self.info = {"version":option, "prototxt":prototxt ,"weights":caffemodel}
 
    
     
@@ -60,6 +64,7 @@ class Network():
         timer.tic()
         scores, boxes = im_detect(self._net, im, _t)
         timer.toc()
+        total_time = "{0:.3f}".format(timer.total_time)
         #print ('Detection took {:.3f}s for '
                #'{:d} object proposals').format(timer.total_time, boxes.shape[0])
 
@@ -82,13 +87,14 @@ class Network():
                 bbox = dets[i, :4]
                 score = float(dets[i, -1])
            
+
                 xmin, ymin, xmax, ymax = bbox
                 xmin, ymin, xmax, ymax = float(xmin), float(ymin), float(xmax), float(ymax)
                 detection= {"class":cls,"xmin":xmin,"ymin":ymin,"xmax":xmax,\
                     "ymax":ymax, "score":score}
                 result.append(detection)
-                
-        return sorted(result, key=lambda x: x["score"], reverse=True)      
+        result = sorted(result, key=lambda x: x["score"], reverse=True)            
+        return  {"time": total_time,"result": result}
      
    
     
@@ -118,7 +124,7 @@ def test():
     print("Testting detect function") 
     im_names = im_names = ['000456.jpg', '000542.jpg', '001150.jpg', '001763.jpg', '004545.jpg']
     for im_name in im_names:
-        img_path = os.path.join(os.getcwd(),"pvanet", "data/demo", im_name)
+        img_path = os.path.join("/root/Object-Detection/","pvanet", "data/demo", im_name)
         print(net.detect(img_path))
 
     print("Testing detect_folder")
