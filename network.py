@@ -39,8 +39,8 @@ class Network():
             raise IOError(('{:s} not found.\nDid you run ./data/script/'
                            'fetch_faster_rcnn_models.sh?').format(caffemodel))  
 
-        caffe.set_mode_gpu()
-        cfg.GPU_ID = gpu_id
+        caffe.set_mode_cpu()
+        #cfg.GPU_ID = gpu_id
         cfg_from_file("/root/Object-Detection/pvanet/models/pvanet/cfgs/submit_160715.yml")
         print("Loading Network to GPU")
         self._net = caffe.Net(prototxt, caffemodel, caffe.TEST)
